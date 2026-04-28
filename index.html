@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루다쌤의 AAC maker-ver.2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 20px; }
+        .group { margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #eee; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+        .checkbox-group input { width: auto; cursor: pointer; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        #file-list { margin-top: 15px; max-height: 250px; overflow-y: auto; font-size: 13px; }
+        .file-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #eee; }
+        .file-item input { flex: 1; padding: 5px; }
+        button { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #1557b0; }
+        #status { margin-top: 15px; text-align: center; font-size: 13px; color: #666; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🎨 루다쌤의 커스텀 AAC 제작기 ver.2</h2>
+    
+    <div class="group">
+        <label>1. 정사각형 크기를 설정해주세요. (mm)</label>
+        <select id="size">
+            <option value="60">60mm</option>
+            <option value="50">50mm</option>
+            <option value="45" selected>45mm</option>
+            <option value="40">40mm</option>
+        </select>
+    </div>
+
+    <div class="group">
+        <label>2. 옵션을 선택해주세요.</label>
+        <div class="checkbox-group">
+            <input type="checkbox" id="useBorder" checked>
+            <span style="font-size: 14px;">이미지 테두리(검은 선) 넣기</span>
+        </div>
+        <label style="margin-top:10px;">글자 크기 (pt)</label>
+        <input type="number" id="fontSize" value="12" min="8" max="30">
+    </div>
+
+    <div class="group">
+        <label>3. 이미지를 선택하면 텍스트를 입력할 수 있습니다.</label>
+        <input type="file" id="images" accept="image/*" multiple onchange="updateFileList()">
+        <div id="file-list"></div>
+    </div>
+
+    <button onclick="generatePDF()">PDF 생성 및 저장</button>
+    <div id="status">테두리 선택, 글자 입력 기능이 추가되었습니다!</div>
+</div>
+
+<script>
+    function updateFileList() {
+        const list = document.getElementById('file-list');
+        const files = document.getElementById('images').files;
+        list.innerHTML = "";
+        
+        for (let i = 0; i < files.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `<span>${i+1}</span><input type="text" id="text-${i}" placeholder="단어 입력 (비워두면 글자 없음)">`;
+            list.appendChild(div);
+        }
+    }
+
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const fileInput = document.getElementById('images');
+        const sizeMm = parseInt(document.getElementById('size').value);
+        const fontSize = parseInt(document.getElementById('fontSize').value);
+        const useBorder = document.getElementById('useBorder').checked;
+        const status = document.getElementById('status');
+        
+        if (fileInput.files.length === 0) {
+            alert("이미지를 선택해 주세요!");
+            return;
+        }
+
+        status.innerText = "PDF 생성 중...";
+        
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const margin = 12;
+        const spacing = 5;
+        let currentX = margin;
+        let currentY = margin;
+
+        for (let i = 0; i < fileInput.files.length; i++) {
+            const file = fileInput.files[i];
+            const imgData = await readFileAsDataURL(file);
+            const label = document.getElementById(`text-${i}`).value;
+            
+            // 1. 이미지 그리기
+            doc.addImage(imgData, 'JPEG', currentX, currentY, sizeMm, sizeMm);
+            
+            // 2. 테두리 그리기 (체크된 경우만)
+            if (useBorder) {
+                doc.setLineWidth(0.2);
+                doc.setDrawColor(0, 0, 0);
+                doc.rect(currentX, currentY, sizeMm, sizeMm);
+            }
+
+            // 3. 글자 그리기
+            if (label) {
+                const textImg = await textToImage(label, fontSize);
+                const textWidth = sizeMm; 
+                const textHeight = (fontSize / 2.5); 
+                doc.addImage(textImg, 'PNG', currentX, currentY + sizeMm + 1, textWidth, textHeight);
+            }
+            
+            // 4. 위치 계산
+            currentX += sizeMm + spacing;
+            if (currentX + sizeMm > 210 - margin) {
+                currentX = margin;
+                currentY += sizeMm + spacing + 10;
+            }
+            if (currentY + sizeMm + 15 > 297 - margin && i < fileInput.files.length - 1) {
+                doc.addPage();
+                currentX = margin;
+                currentY = margin;
+            }
+        }
+
+        doc.save(`루다쌤_커스텀교구.pdf`);
+        status.innerText = "저장 완료!";
+    }
+
+    function textToImage(text, size) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const scale = 4;
+            canvas.width = 400; 
+            canvas.height = 60;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.fillStyle = "black";
+            ctx.font = `bold ${size * scale}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            resolve(canvas.toDataURL("image/png"));
+        });
+    }
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+
+</body>
+</html>
