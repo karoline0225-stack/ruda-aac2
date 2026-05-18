@@ -2,38 +2,42 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SLP RUDA's AAC maker-ver.3</title>
+    <title>SLP RUDA's AAC maker-ver.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --primary-color: #1a73e8; --hover-color: #1557b0; --bg-color: #f8f9fa; }
-        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: var(--bg-color); display: flex; justify-content: center; padding: 20px; color: #333; }
+        body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f8f9fa; display: flex; justify-content: center; padding: 20px; color: #333; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 550px; }
-        h2 { text-align: center; color: var(--primary-color); margin-bottom: 25px; font-size: 24px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; font-size: 24px; }
         .group { margin-bottom: 20px; padding: 15px; background: #fff; border: 1px solid #edf2f7; border-radius: 12px; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; }
+        .radio-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+        .radio-group { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         label { display: block; font-weight: bold; margin-bottom: 10px; font-size: 15px; color: #4a5568; }
-        select, input[type="number"], input[type="file"] { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; transition: all 0.2s; }
-        select:focus, input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
-        #file-list { margin-top: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px; }
-        .file-item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; background: #fff; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .file-item span { font-weight: bold; color: var(--primary-color); min-width: 20px; }
-        .file-item input { flex: 1; padding: 8px; border: 1px solid #cbd5e0; }
+        select, input[type="number"], input[type="file"] { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
+        #file-list { margin-top: 15px; max-height: 280px; overflow-y: auto; }
+        .file-item { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; background: #f8f9fa; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .file-info { font-size: 13px; font-weight: bold; color: #718096; }
+        .file-info span { color: #1a73e8; margin-right: 5px; }
+        .file-item input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; }
         .btn-container { display: flex; gap: 10px; margin-top: 20px; }
-        button { flex: 2; padding: 16px; background: var(--primary-color); color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: var(--hover-color); transform: translateY(-1px); }
+        button { flex: 2; padding: 16px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1557b0; }
         .btn-reset { flex: 1; background: #edf2f7; color: #4a5568; }
         .btn-reset:hover { background: #e2e8f0; }
         #status { margin-top: 20px; text-align: center; font-size: 14px; color: #718096; font-weight: 600; }
         .footer { margin-top: 35px; text-align: center; border-top: 1px solid #edf2f7; padding-top: 20px; }
+        
+        /* 💡 인스타그램 링크 스타일 설정 */
+        .insta-link { color: #1a73e8; text-decoration: none; font-weight: bold; font-size: 14px; transition: color 0.2s; }
+        .insta-link:hover { color: #1557b0; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🎨 루다쌤의 AAC maker ver.3</h2>
+    <h2>🎨 루다쌤의 AAC maker ver.4.4</h2>
     
     <div class="group">
-        <label>1. 정사각형 크기 (mm) [그림 기준]</label>
+        <label>1. 정사각형 크기 (mm) [테두리 기준]</label>
         <select id="size">
             <option value="60">60mm</option>
             <option value="50">50mm</option>
@@ -44,24 +48,57 @@
     </div>
 
     <div class="group">
-        <label>2. 제작 및 글자 옵션</label>
-        <div class="checkbox-group">
-            <input type="checkbox" id="useBorder" checked style="width: 18px; height: 18px;">
-            <span style="font-size: 14px; font-weight: 500;">그림에만 테두리(검은 선) 넣기</span>
+        <label>2. 제작 및 테두리 옵션</label>
+        <div class="radio-container">
+            <div class="radio-group">
+                <input type="radio" id="borderImg" name="borderOption" style="width: 18px; height: 18px;">
+                <span onclick="document.getElementById('borderImg').click()">그림 영역에만 테두리 넣기</span>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="borderOuter" name="borderOption" checked style="width: 18px; height: 18px;">
+                <span onclick="document.getElementById('borderOuter').click()">글자 포함 전체(외곽) 테두리 넣기</span>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="borderNone" name="borderOption" style="width: 18px; height: 18px;">
+                <span onclick="document.getElementById('borderNone').click()">테두리 선 없음</span>
+            </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <label style="font-size: 13px;">테두리 색깔</label>
+                <select id="borderColor">
+                    <option value="black" selected>검정</option>
+                    <option value="red">빨강</option>
+                    <option value="orange">주황</option>
+                    <option value="brown">갈색</option>
+                    <option value="green">초록</option>
+                    <option value="purple">보라</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 13px;">테두리 굵기</label>
+                <select id="borderWidth">
+                    <option value="thin">얇게</option>
+                    <option value="normal" selected>보통</option>
+                    <option value="thick">두껍게</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
                 <label style="font-size: 13px;">글자 위치 스타일</label>
                 <select id="textPos">
+                    <option value="margin-bottom" selected>그림 여백 아래</option>
                     <option value="margin-top">그림 여백 위</option>
-                    <option value="margin-bottom">그림 여백 아래</option>
                     <option value="overlay-top">그림 겹치기 위</option>
                     <option value="overlay-bottom">그림 겹치기 아래</option>
                 </select>
             </div>
-            <div>
+            <div style="flex: 1;">
                 <label style="font-size: 13px;">글자 크기 (pt)</label>
-                <input type="number" id="fontSize" value="16" min="8" max="40">
+                <input type="number" id="fontSize" value="14" min="8" max="40">
             </div>
         </div>
     </div>
@@ -76,14 +113,16 @@
         <button onclick="generatePDF()">PDF 생성 및 저장</button>
         <button class="btn-reset" onclick="resetAll()">초기화</button>
     </div>
-    <div id="status">글자 상하 위치 선택 기능이 추가되었습니다.</div>
+    <div id="status">파일을 선택하면 입력창이 나타납니다.</div>
 
     <div class="footer">
         <p style="font-size: 13px; color: #a0aec0; margin-bottom: 5px;">
             © 2026. SLP RUDA. All rights reserved.
         </p>
-        <p style="font-size: 14px; color: var(--primary-color); font-weight: bold;">
-            <a href="https://www.instagram.com/ruda_slp" target="_blank" style="text-decoration: none; color: inherit;">Instagram: @ruda_slp</a>
+        <p>
+            <a href="https://www.instagram.com/ruda_slp" target="_blank" class="insta-link">
+                Instagram: @ruda_slp
+            </a>
         </p>
     </div>
 </div>
@@ -93,12 +132,19 @@
         const list = document.getElementById('file-list');
         const files = document.getElementById('images').files;
         list.innerHTML = "";
+        
+        if (files.length === 0) return;
+
         for (let i = 0; i < files.length; i++) {
             const div = document.createElement('div');
             div.className = 'file-item';
-            div.innerHTML = `<span>${i+1}</span><input type="text" id="text-${i}" placeholder="단어 입력">`;
+            div.innerHTML = `
+                <div class="file-info"><span>${i+1}</span>📁 파일명: ${files[i].name}</div>
+                <input type="text" id="text-${i}" placeholder="이 그림에 매칭할 단어 입력">
+            `;
             list.appendChild(div);
         }
+        document.getElementById('status').innerText = `${files.length}개의 파일이 선택되었습니다.`;
     }
 
     function resetAll() {
@@ -112,26 +158,31 @@
     async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const fileInput = document.getElementById('images');
-        const sizeMm = parseInt(document.getElementById('size').value);
-        const fontSize = parseInt(document.getElementById('fontSize').value);
-        const textPos = document.getElementById('textPos').value;
-        const useBorder = document.getElementById('useBorder').checked;
-        const status = document.getElementById('status');
         
-        if (fileInput.files.length === 0) {
-            alert("이미지를 선택해 주세요!");
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("이미지를 먼저 선택해 주세요!");
             return;
         }
+
+        const boxSize = parseInt(document.getElementById('size').value);
+        const fontSize = parseInt(document.getElementById('fontSize').value);
+        const textPos = document.getElementById('textPos').value;
+        
+        const useImgBorder = document.getElementById('borderImg').checked;
+        const useOuterBorder = document.getElementById('borderOuter').checked;
+        
+        const borderColor = document.getElementById('borderColor').value;
+        const borderWidthStr = document.getElementById('borderWidth').value;
+        const status = document.getElementById('status');
 
         status.innerText = "PDF 생성 중...";
         const doc = new jsPDF('p', 'mm', 'a4');
         const margin = 15;
         const spacing = 8;
         
-        // 여백 모드일 때만 높이 추가
-        const textSpace = (textPos.startsWith('margin')) ? (fontSize / 1.5) : 0; 
-        const cardHeight = sizeMm + textSpace;
-        
+        const textSpace = (textPos.startsWith('margin')) ? (fontSize / 1.2) : 0;
+        const imgSize = boxSize - textSpace;
+
         let currentX = margin;
         let currentY = margin;
 
@@ -140,49 +191,67 @@
             const imgData = await readFileAsDataURL(file);
             const label = document.getElementById(`text-${i}`).value;
             
-            // 이미지 시작 Y축 계산 (여백 위 모드일 때만 이미지가 밀려남)
-            const imgY = (textPos === 'margin-top') ? (currentY + textSpace) : currentY;
+            let imgX = currentX;
+            let imgY = currentY;
             
-            // 1. 이미지 그리기
-            doc.addImage(imgData, 'JPEG', currentX, imgY, sizeMm, sizeMm);
-            
-            // 2. 테두리 (그림에만)
-            if (useBorder) {
-                doc.setLineWidth(0.2);
-                doc.setDrawColor(0, 0, 0);
-                doc.rect(currentX, imgY, sizeMm, sizeMm);
+            if (textPos === 'margin-top') {
+                imgY = currentY + textSpace;
+                imgX = currentX + (textSpace / 2);
+            } else if (textPos === 'margin-bottom') {
+                imgX = currentX + (textSpace / 2);
             }
-
-            // 3. 글자 그리기
+            
+            const drawImgSize = textPos.startsWith('margin') ? imgSize : boxSize;
+            doc.addImage(imgData, 'JPEG', imgX, imgY, drawImgSize, drawImgSize);
+            
             if (label) {
                 const isOverlay = textPos.startsWith('overlay');
                 const textImg = await textToImage(label, fontSize, isOverlay);
-                const textWidth = sizeMm;
+                const textWidth = boxSize;
                 const textHeight = (fontSize / 2.5);
                 
                 let textY;
-                if (textPos === 'margin-top') textY = currentY + 1;
-                else if (textPos === 'margin-bottom') textY = currentY + sizeMm + 1;
+                if (textPos === 'margin-top') textY = currentY + 0.5;
+                else if (textPos === 'margin-bottom') textY = currentY + boxSize - textHeight - 0.5;
                 else if (textPos === 'overlay-top') textY = currentY + 1.5;
-                else if (textPos === 'overlay-bottom') textY = currentY + sizeMm - textHeight - 1.5;
+                else if (textPos === 'overlay-bottom') textY = currentY + boxSize - textHeight - 1.5;
                 
                 doc.addImage(textImg, 'PNG', currentX, textY, textWidth, textHeight);
             }
-            
-            // 위치 계산
-            currentX += sizeMm + spacing;
-            if (currentX + sizeMm > 210 - margin) {
-                currentX = margin;
-                currentY += cardHeight + spacing + 5;
+
+            let ptWidth = 0.2; 
+            if (borderWidthStr === 'normal') ptWidth = 0.6; 
+            else if (borderWidthStr === 'thick') ptWidth = 1.2; 
+            doc.setLineWidth(ptWidth);
+
+            let r = 0, g = 0, b = 0; 
+            if (borderColor === 'red') { r = 230; g = 57; b = 70; }
+            else if (borderColor === 'orange') { r = 247; g = 127; b = 0; }
+            else if (borderColor === 'brown') { r = 119; g = 73; b = 54; }
+            else if (borderColor === 'green') { r = 42; g = 157; b = 143; }
+            else if (borderColor === 'purple') { r = 114; g = 9; b = 183; }
+            doc.setDrawColor(r, g, b);
+
+            if (useImgBorder) {
+                doc.rect(imgX, imgY, drawImgSize, drawImgSize);
             }
-            if (currentY + cardHeight + 10 > 297 - margin && i < fileInput.files.length - 1) {
+            if (useOuterBorder) {
+                doc.rect(currentX, currentY, boxSize, boxSize);
+            }
+            
+            currentX += boxSize + spacing;
+            if (currentX + boxSize > 210 - margin) {
+                currentX = margin;
+                currentY += boxSize + spacing + 3;
+            }
+            if (currentY + boxSize + 10 > 297 - margin && i < fileInput.files.length - 1) {
                 doc.addPage();
                 currentX = margin;
                 currentY = margin;
             }
         }
 
-        doc.save(`루다쌤의 AAC maker_v3.pdf`);
+        doc.save(`루다쌤의 AAC maker_v4.4.pdf`);
         status.innerText = "저장 완료!";
     }
 
@@ -197,7 +266,7 @@
             
             if(isOverlay) {
                 ctx.fillStyle = "rgba(255,255,255,0.75)";
-                ctx.fillRect(40, 10, 320, 60); // 겹치기 시 가독성 위한 배경
+                ctx.fillRect(40, 10, 320, 60); 
             }
             
             ctx.fillStyle = "black";
