@@ -2,7 +2,33 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>SLP RUDA's AAC maker-ver.4</title>
+    <title>SLP RUDA's AAC maker-ver.4.8</title>
+    
+    <script>
+        // 불펌 및 컨텍스트 메뉴 제한
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            alert("보안을 위해 마우스 오른쪽 클릭은 금지되어 있습니다.");
+            return false;
+        });
+
+        // 개발자 도구 단축키 진입 차단 (F12, 소스보기, 인스펙터)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f8f9fa; display: flex; justify-content: center; padding: 20px; color: #333; }
@@ -25,8 +51,6 @@
         .btn-reset:hover { background: #e2e8f0; }
         #status { margin-top: 20px; text-align: center; font-size: 14px; color: #718096; font-weight: 600; }
         .footer { margin-top: 35px; text-align: center; border-top: 1px solid #edf2f7; padding-top: 20px; }
-        
-        /* 💡 인스타그램 링크 스타일 설정 */
         .insta-link { color: #1a73e8; text-decoration: none; font-weight: bold; font-size: 14px; transition: color 0.2s; }
         .insta-link:hover { color: #1557b0; text-decoration: underline; }
     </style>
@@ -34,7 +58,7 @@
 <body>
 
 <div class="card">
-    <h2>🎨 루다쌤의 AAC maker ver.4.4</h2>
+    <h2>🎨 루다쌤의 AAC maker ver.4.8</h2>
     
     <div class="group">
         <label>1. 정사각형 크기 (mm) [테두리 기준]</label>
@@ -128,6 +152,7 @@
 </div>
 
 <script>
+    // 업로드 파일 리스트 갱신 및 입력 필드 생성
     function updateFileList() {
         const list = document.getElementById('file-list');
         const files = document.getElementById('images').files;
@@ -147,6 +172,7 @@
         document.getElementById('status').innerText = `${files.length}개의 파일이 선택되었습니다.`;
     }
 
+    // 폼 초기화
     function resetAll() {
         if(confirm("모든 데이터를 초기화할까요?")) {
             document.getElementById('images').value = "";
@@ -155,6 +181,7 @@
         }
     }
 
+    // PDF 렌더링 엔진 메인 프로세스
     async function generatePDF() {
         const { jsPDF } = window.jspdf;
         const fileInput = document.getElementById('images');
@@ -180,6 +207,7 @@
         const margin = 15;
         const spacing = 8;
         
+        // 여백 스타일에 따른 가변 패딩 연산
         const textSpace = (textPos.startsWith('margin')) ? (fontSize / 1.2) : 0;
         const imgSize = boxSize - textSpace;
 
@@ -194,6 +222,7 @@
             let imgX = currentX;
             let imgY = currentY;
             
+            // 여백 타입별 좌표 디테일 보정
             if (textPos === 'margin-top') {
                 imgY = currentY + textSpace;
                 imgX = currentX + (textSpace / 2);
@@ -201,9 +230,11 @@
                 imgX = currentX + (textSpace / 2);
             }
             
+            // 이미지 드로잉
             const drawImgSize = textPos.startsWith('margin') ? imgSize : boxSize;
             doc.addImage(imgData, 'JPEG', imgX, imgY, drawImgSize, drawImgSize);
             
+            // 라벨 가독성 처리 및 드로잉
             if (label) {
                 const isOverlay = textPos.startsWith('overlay');
                 const textImg = await textToImage(label, fontSize, isOverlay);
@@ -219,11 +250,13 @@
                 doc.addImage(textImg, 'PNG', currentX, textY, textWidth, textHeight);
             }
 
+            // 라인 웨이트 값 변환
             let ptWidth = 0.2; 
             if (borderWidthStr === 'normal') ptWidth = 0.6; 
             else if (borderWidthStr === 'thick') ptWidth = 1.2; 
             doc.setLineWidth(ptWidth);
 
+            // 보더 컬러맵 RGB 매핑
             let r = 0, g = 0, b = 0; 
             if (borderColor === 'red') { r = 230; g = 57; b = 70; }
             else if (borderColor === 'orange') { r = 247; g = 127; b = 0; }
@@ -232,6 +265,7 @@
             else if (borderColor === 'purple') { r = 114; g = 9; b = 183; }
             doc.setDrawColor(r, g, b);
 
+            // 지정 옵션에 맞춰 보더 사각형 드로잉
             if (useImgBorder) {
                 doc.rect(imgX, imgY, drawImgSize, drawImgSize);
             }
@@ -239,6 +273,7 @@
                 doc.rect(currentX, currentY, boxSize, boxSize);
             }
             
+            // 바둑판식 배열 레이아웃 연산 및 오버플로우 시 페이지 피드 처리
             currentX += boxSize + spacing;
             if (currentX + boxSize > 210 - margin) {
                 currentX = margin;
@@ -251,10 +286,11 @@
             }
         }
 
-        doc.save(`루다쌤의 AAC maker_v4.4.pdf`);
+        doc.save(`루다쌤의 AAC maker_v4.8.pdf`);
         status.innerText = "저장 완료!";
     }
 
+    // 가독성 보정 텍스트 캔버스 소스화 펑션
     function textToImage(text, size, isOverlay) {
         return new Promise((resolve) => {
             const canvas = document.createElement("canvas");
@@ -278,6 +314,7 @@
         });
     }
 
+    // 파일 버퍼 스트림 변환 처리
     function readFileAsDataURL(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
